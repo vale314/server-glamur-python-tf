@@ -14,7 +14,7 @@ import urllib.request
 from urllib.parse import urlparse, parse_qs
 import uuid
 
-HOST = "127.0.0.1"
+HOST = "137.184.150.122"
 PORT = 9999
 
 class NeuralHTTP(BaseHTTPRequestHandler):
@@ -26,8 +26,16 @@ class NeuralHTTP(BaseHTTPRequestHandler):
 
         # print (self.path)
         query = urlparse(self.path).query
-        
+        if(not query.startswith("url")):
+            data1 = {}
+            data1["prediction"] = str(-1)
+
+            json_to_pass1 = json.dumps(data1)
+            self.wfile.write(json_to_pass1.encode('utf-8'))
+            return
+
         query_components = dict(qc.split("=") for qc in query.split("&"))
+        
         urlImage = query_components["url"]
 
         filename = str(uuid.uuid4().hex+".jpg")
@@ -40,18 +48,24 @@ class NeuralHTTP(BaseHTTPRequestHandler):
         else:
             print("The file does not exist") 
 
+        class_names = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',
+               'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
+
         data = {}
         data["prediction"] = str(aux)
+        data["clase"] = str(class_names[aux])
 
         json_to_pass = json.dumps(data)
         self.wfile.write(json_to_pass.encode('utf-8'))
 
 def function_hola(image_name):
     # Recreate the exact same model, including its weights and the optimizer
+    
+    #model = tf.keras.models.load_model('modelShort1.h5')
     model = tf.keras.models.load_model('name.h5')
 
     #Show the model architecture
-    model.summary()
+    #model.summary()
     
     image_file = Image.open(image_name) # open colour image
     image_file = image_file.convert('1') # convert image to black and white
@@ -77,7 +91,7 @@ def function_hola(image_name):
     else:
         print("The file does not exist") 
 
-    print (prediction_digits[0])
+    #print (prediction_digits[0])
 
     return prediction_digits[0]
 
@@ -85,4 +99,3 @@ server = HTTPServer((HOST, PORT), NeuralHTTP)
 print ("running")
 server .serve_forever()
 server.server_close()
-
